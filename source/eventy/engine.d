@@ -1,5 +1,9 @@
 module eventy.engine;
 
+import eventy.queues : Queue;
+import eventy.signal : Signal;
+import eventy.event : Event;
+
 
 /**
 * Engine
@@ -13,5 +17,31 @@ module eventy.engine;
 */
 public final class Engine
 {
+    /* TODO: Or use a queue data structure */
+    private Queue[] queues;
 
+    /* TODO: Or use a queue data structure */
+    private Signal[] handlers;
+
+    this()
+    {
+
+    }
+
+    /**
+    * push(Event e)
+    *
+    * Provided an Event, `e`, this will enqueue the event
+    * to 
+    */
+    public void push(Event e)
+    {
+
+    }
+
+    public ulong[] getTypes()
+    {
+        /* TODO: Implement me */
+        return null;
+    }
 }
