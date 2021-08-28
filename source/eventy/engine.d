@@ -29,6 +29,19 @@ public final class Engine
     }
 
     /**
+    * Event loop
+    */
+    public void run()
+    {
+        while(true)
+        {
+            /* TODO: Implement me */
+
+            /* TODO: Add yield to stop mutex starvation on a single thread */
+        }
+    }
+
+    /**
     * push(Event e)
     *
     * Provided an Event, `e`, this will enqueue the event
