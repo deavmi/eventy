@@ -1,11 +1,12 @@
 module eventy.engine;
 
 import eventy.queues : Queue;
-import eventy.signal : Signal;
+import eventy.signal : Signal, EventHandler;
 import eventy.event : Event;
 
 import std.container.dlist;
 import core.sync.mutex : Mutex;
+import core.thread : Thread;
 
 /**
 * Engine
@@ -66,6 +67,44 @@ public final class Engine
 
             /* TODO: Add yield to stop mutex starvation on a single thread */
         }
+    }
+
+    /**
+    * Dispatch(Signal[] set, Event e)
+    *
+    * Creates a new thread per signal and dispatches the event to them
+    *
+    * TODO: Add ability to dispatch on this thread
+    */
+    private void dispatch(Signal[] signalSet, Event e)
+    {
+        foreach(Signal signal; signalSet)
+        {
+            /* Create a new Thread */
+            Thread handlerThread = getThread(signal, e);
+
+            /* Start the thread */
+            handlerThread.start();
+        }
+    }
+
+    private Thread getThread(Signal signal, Event e)
+    {
+        Thread signalHandlerThread = new class Thread
+        {
+            this()
+            {
+                super(&worker);
+            }
+
+            public void worker()
+            {
+                EventHandler handler = signal.getHandler();
+                handler(e);
+            }
+        };
+
+        return signalHandlerThread;
     }
 
     private Signal[] getSignalsForEvent(Event e)
