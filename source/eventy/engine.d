@@ -42,8 +42,50 @@ public final class Engine
         {
             /* TODO: Implement me */
 
+            /* Lock the queue-set */
+            queueLock.lock();
+
+            foreach(Queue queue; queues)
+            {
+                /* If the queue has evenets queued */
+                if(queue.hasEvents())
+                {
+                    /* TODO: Add different dequeuing techniques */
+
+                    /* Pop the first Event */
+                    Event headEvent = queue.popEvent();
+
+                    /* Get all signal-handlers for this event type */
+                    Signal[] handlersMatched = getSignalsForEvent(headEvent);
+                    
+                }
+            }
+
+            /* Unlock the queue set */
+            queueLock.unlock();
+
             /* TODO: Add yield to stop mutex starvation on a single thread */
         }
+    }
+
+    private Signal[] getSignalsForEvent(Event e)
+    {
+        /* Matched handlers */
+        Signal[] matchedHandlers;
+
+        /* Lock the signal-set */
+        handlerLock.lock();
+
+        /* Find all handlers matching */
+        foreach(Signal signal; handlers)
+        {
+            matchedHandlers ~= signal;
+        }
+
+        /* Unlock the signal-set */
+        handlerLock.unlock();
+
+        return matchedHandlers;
     }
 
     /**
