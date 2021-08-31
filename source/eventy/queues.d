@@ -1,5 +1,10 @@
 module eventy.queues;
 
+import eventy.event : Event;
+import core.sync.mutex : Mutex;
+import std.container.dlist;
+import std.range;
+
 /**
 * Queue
 *
@@ -8,6 +13,52 @@ module eventy.queues;
 */
 public final class Queue
 {
-    private ulong id;
+    public ulong id;
     /* TODO: Add queue of Event's here */
+
+    private DList!(Event) queue;
+    private Mutex queueLock;
+
+
+    public void add(Event e)
+    {
+        /* Lock the queue */
+        queueLock.lock();
+
+        queue.insert(e);
+
+        /* Unlock the queue */
+        queueLock.unlock();
+    }
+
+    public bool hasEvents()
+    {
+        bool has;
+
+        /* Lock the queue */
+        queueLock.lock();
+
+        has = (queue[]).empty();
+
+        /* Unlock the queue */
+        queueLock.unlock();
+
+        return has;
+    }
+
+    public Event popEvent()
+    {
+        Event poppedEvent;
+
+        /* Lock the queue */
+        queueLock.lock();
+        
+        poppedEvent = (queue[]).front();
+        (queue[]).popFront();
+
+        /* Unlock the queue */
+        queueLock.unlock();
+
+        return poppedEvent;
+    }
 }
