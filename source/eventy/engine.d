@@ -4,6 +4,8 @@ import eventy.queues : Queue;
 import eventy.signal : Signal;
 import eventy.event : Event;
 
+import std.container.dlist;
+import core.sync.mutex : Mutex;
 
 /**
 * Engine
@@ -18,14 +20,17 @@ import eventy.event : Event;
 public final class Engine
 {
     /* TODO: Or use a queue data structure */
-    private Queue[] queues;
+    private DList!(Queue) queues;
+    private Mutex queueLock;
 
     /* TODO: Or use a queue data structure */
-    private Signal[] handlers;
+    private DList!(Signal) handlers;
+    private Mutex handlerLock;
 
     this()
     {
-
+        queueLock = new Mutex();
+        handlerLock = new Mutex();
     }
 
     /**
@@ -49,7 +54,35 @@ public final class Engine
     */
     public void push(Event e)
     {
+        Queue matchedQueue = findQueue(e.id);
 
+        if(matchedQueue)
+        {
+            /* Append to the queue */
+            matchedQueue.add(e);
+        }
+    }
+
+    public Queue findQueue(ulong id)
+    {
+        /* Lock the queue collection */
+        queueLock.lock();
+
+        /* Find the matching queue */
+        Queue matchedQueue;
+        foreach(Queue queue; queues)
+        {
+            if(queue.id == id)
+            {
+                matchedQueue = queue;
+                break;
+            }
+        }
+
+        /* Unlock the queue collection */
+        queueLock.unlock();
+
+        return matchedQueue;
     }
 
     public ulong[] getTypes()
