@@ -25,6 +25,8 @@ public class Signal
         this.handler = handler;
     }
 
+
+
     /**
     * Returns true if this signal handles the given typeID
     * false otherwise
@@ -32,7 +34,15 @@ public class Signal
     public bool handles(ulong typeID)
     {
         /* FIXME: Implement */
-        return true;
+        foreach(ulong id; typeIDs)
+        {
+            if(id == typeID)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void registerTypeID(ulong typeID)
