@@ -20,6 +20,12 @@ public final class Queue
     private Mutex queueLock;
 
 
+    this(ulong id)
+    {
+        this.id = id;
+        queueLock = new Mutex();
+    }
+
     public void add(Event e)
     {
         /* Lock the queue */
@@ -38,7 +44,7 @@ public final class Queue
         /* Lock the queue */
         queueLock.lock();
 
-        has = (queue[]).empty();
+        has = !(queue[]).empty();
 
         /* Unlock the queue */
         queueLock.unlock();
