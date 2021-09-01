@@ -8,6 +8,34 @@ import std.container.dlist;
 import core.sync.mutex : Mutex;
 import core.thread : Thread;
 
+
+import std.stdio;
+
+/* TODO: Move elsewhere, this thing thinks it's a delegate in the unit test, idk why */
+void runner(Event e)
+{
+    import std.stdio;
+    writeln(e);
+    writeln("fdhjhfdjhfdjk");
+}
+
+unittest
+{
+    Engine engine = new Engine();
+    engine.start();
+
+ 
+    engine.addQueue(1);
+
+    Signal j = new Signal([1], &runner);
+    engine.addSignalHandler(j);
+
+    Event eTest = new Event(1);
+    engine.push(eTest);
+
+    writeln("naai");
+}
+
 /**
 * Engine
 *
@@ -18,7 +46,7 @@ import core.thread : Thread;
 * handlers, add signal handlers, among many
 * other things
 */
-public final class Engine
+public final class Engine : Thread
 {
     /* TODO: Or use a queue data structure */
     private DList!(Queue) queues;
@@ -30,8 +58,21 @@ public final class Engine
 
     this()
     {
+        super(&run);
         queueLock = new Mutex();
         handlerLock = new Mutex();
+    }
+
+    public void addSignalHandler(Signal e)
+    {
+         /* Lock the signal-set */
+        handlerLock.lock();
+
+        /* Add the new handler */
+        handlers.insert(e);
+
+        /* Unlock the signal-set */
+        handlerLock.unlock();
     }
 
     /**
@@ -47,7 +88,7 @@ public final class Engine
             queueLock.lock();
 
             foreach(Queue queue; queues)
-            {
+            {  
                 /* If the queue has evenets queued */
                 if(queue.hasEvents())
                 {
@@ -55,9 +96,12 @@ public final class Engine
 
                     /* Pop the first Event */
                     Event headEvent = queue.popEvent();
-
+                   
                     /* Get all signal-handlers for this event type */
                     Signal[] handlersMatched = getSignalsForEvent(headEvent);
+
+                    /* Dispatch the signal handlers */
+                    dispatch(handlersMatched, headEvent);
                     
                 }
             }
@@ -118,7 +162,10 @@ public final class Engine
         /* Find all handlers matching */
         foreach(Signal signal; handlers)
         {
-            matchedHandlers ~= signal;
+            if(signal.handles(e.id))
+            {
+                matchedHandlers ~= signal;
+            }
         }
 
         /* Unlock the signal-set */
@@ -142,6 +189,21 @@ public final class Engine
             /* Append to the queue */
             matchedQueue.add(e);
         }
+    }
+
+    public void addQueue(ulong id)
+    {
+        /* Create a new queue with the given id */
+        Queue newQueue = new Queue(id);
+
+        /* Lock the queue collection */
+        queueLock.lock();
+
+        /* TODO: Check for duplicate queue */
+        queues.insert(newQueue);
+
+        /* Unlock the queue collection */
+        queueLock.unlock();
     }
 
     public Queue findQueue(ulong id)
