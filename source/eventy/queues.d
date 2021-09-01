@@ -26,6 +26,11 @@ public final class Queue
         queueLock = new Mutex();
     }
 
+    public DList!(Event).Range getKak()
+    {
+        return queue[];
+    }
+
     public void add(Event e)
     {
         /* Lock the queue */
@@ -60,7 +65,7 @@ public final class Queue
         queueLock.lock();
         
         poppedEvent = (queue[]).front();
-        (queue[]).popFront();
+        queue.removeFront();
 
         /* Unlock the queue */
         queueLock.unlock();
