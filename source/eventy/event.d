@@ -13,7 +13,7 @@ public class Event
     */
     this(ulong typeID)
     {
-
+        this.id = typeID;
     }
 
     ulong id;
