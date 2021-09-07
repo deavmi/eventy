@@ -109,8 +109,22 @@ public final class Engine : Thread
         {
             /* TODO: Implement me */
 
-            /* Lock the queue-set */
-            queueLock.lock();
+            /**
+            * TODO: If lock fails, then yield
+            */
+
+            /**
+            * Lock the queue-set
+            *
+            * Additionally:
+            * Don't waste time spinning on mutex,
+            * if it is not lockable then yield
+            */
+            while(!queueLock.tryLock_nothrow())
+            {
+                yield();
+            }
+
 
             foreach(Queue queue; queues)
             {  
