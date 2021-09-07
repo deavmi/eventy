@@ -6,7 +6,7 @@ import eventy.event : Event;
 
 import std.container.dlist;
 import core.sync.mutex : Mutex;
-import core.thread : Thread;
+import core.thread : Thread, dur, Duration;
 
 
 import std.stdio;
@@ -33,6 +33,9 @@ unittest
     Event eTest = new Event(1);
     engine.push(eTest);
 
+    Thread.sleep(dur!("seconds")(2));
+    engine.push(eTest);
+
     writeln("naai");
 }
 
@@ -56,11 +59,33 @@ public final class Engine : Thread
     private DList!(Signal) handlers;
     private Mutex handlerLock;
 
+    private Duration sleepTime;
+
     this()
     {
         super(&run);
         queueLock = new Mutex();
         handlerLock = new Mutex();
+    }
+
+    /**
+    * Set the event loop sleep time
+    *
+    * The load average will sky rocket if it is 0,
+    * which is just because it is calculated on how
+    * full the run queue is, length but also over time
+    * and even just one task continousy in it will
+    * make the average high
+    *
+    * Reason why it's always runnable is the process
+    * (the "thread") is a tight loop with no sleeps
+    * that would dequeue it from the run queue and/or
+    * no I/O system calls that would put it into the
+    * waiting queue
+    */
+    public void setSleep(Duration time)
+    {
+        sleepTime = time;
     }
 
     public void addSignalHandler(Signal e)
@@ -109,7 +134,14 @@ public final class Engine : Thread
             /* Unlock the queue set */
             queueLock.unlock();
 
+            /* Yield to stop mutex starvation */
+            yield();
+
             /* TODO: Add yield to stop mutex starvation on a single thread */
+
+            /* Sleep the thread */
+            // sleepTime = dur!("seconds")(0);
+            // sleep(sleepTime);
         }
     }
 
