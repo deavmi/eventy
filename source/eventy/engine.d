@@ -251,9 +251,8 @@ public final class Engine : Thread
         /* Lock the queue collection */
         queueLock.lock();
 
-        /* TODO: Check for duplicate queue */
-        /* If no such queue exists (recursive mutex used) */
-        if(findQueue(id))
+        /* If no such queue exists then add it (recursive mutex used) */
+        if(!findQueue(id))
         {
             /* Add the queue */
             queues ~= newQueue;
