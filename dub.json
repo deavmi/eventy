@@ -3,8 +3,8 @@
 		"Tristan B. Kildaire"
 	],
 	"copyright": "Copyright © 2020, Tristan B. Kildaire",
-	"description": "A minimal D application.",
-	"license": "proprietary",
-	"name": "eventdisp",
+	"description": "Easy to use event-loop dispatcher mechanism",
+	"license": "LGPL v3",
+	"name": "eventy",
 	"targetType": "library"
 }
