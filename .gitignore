@@ -13,3 +13,4 @@ eventdisp-test-*
 *.o
 *.obj
 *.lst
+libeventdisp.a
