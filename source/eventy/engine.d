@@ -8,6 +8,8 @@ import std.container.dlist;
 import core.sync.mutex : Mutex;
 import core.thread : Thread, dur, Duration;
 
+import eventy.exceptions;
+
 
 import std.stdio;
 
@@ -15,8 +17,7 @@ import std.stdio;
 void runner(Event e)
 {
     import std.stdio;
-    writeln(e);
-    writeln("fdhjhfdjhfdjk");
+    writeln("Running event", e.id);
 }
 
 unittest
@@ -26,12 +27,17 @@ unittest
 
  
     engine.addQueue(1);
+    engine.addQueue(2);
 
-    Signal j = new Signal([1], &runner);
+    Signal j = new Signal([1,2], &runner);
     engine.addSignalHandler(j);
 
     Event eTest = new Event(1);
     engine.push(eTest);
+
+    eTest = new Event(2);
+    engine.push(eTest);
+    
 
     Thread.sleep(dur!("seconds")(2));
     engine.push(eTest);
@@ -94,7 +100,7 @@ public final class Engine : Thread
         handlerLock.lock();
 
         /* Add the new handler */
-        handlers.insert(e);
+        handlers ~= e;
 
         /* Unlock the signal-set */
         handlerLock.unlock();
@@ -246,7 +252,17 @@ public final class Engine : Thread
         queueLock.lock();
 
         /* TODO: Check for duplicate queue */
-        queues.insert(newQueue);
+        /* If no such queue exists (recursive mutex used) */
+        if(findQueue(id))
+        {
+            /* Add the queue */
+            queues ~= newQueue;
+        }
+        else
+        {
+            throw new EventyException("Failure to add queue with ID already in use");
+        }
+        
 
         /* Unlock the queue collection */
         queueLock.unlock();
