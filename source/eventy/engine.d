@@ -203,7 +203,7 @@ public final class Engine : Thread
         return signalHandlerThread;
     }
 
-    private Signal[] getSignalsForEvent(Event e)
+    public Signal[] getSignalsForEvent(Event e)
     {
         /* Matched handlers */
         Signal[] matchedHandlers;
