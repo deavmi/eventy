@@ -25,8 +25,6 @@ public class Signal
         this.handler = handler;
     }
 
-
-
     /**
     * Returns true if this signal handles the given typeID
     * false otherwise
