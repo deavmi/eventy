@@ -94,6 +94,11 @@ public final class Engine : Thread
         sleepTime = time;
     }
 
+    /**
+    * Adds the given Signal handler
+    *
+    * @param e the Signal handler to add
+    */
     public void addSignalHandler(Signal e)
     {
          /* Lock the signal-set */
