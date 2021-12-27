@@ -203,6 +203,14 @@ public final class Engine : Thread
         return signalHandlerThread;
     }
 
+    /**
+    * returns all signal(s) responsible for
+    * handling the type of Event provided
+    *
+    * @param e the Event type to match to
+    * @returns Signal[] the list of signal
+    * handlers that handle event e
+    */
     public Signal[] getSignalsForEvent(Event e)
     {
         /* Matched handlers */
