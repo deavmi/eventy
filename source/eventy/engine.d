@@ -243,6 +243,14 @@ public final class Engine : Thread
         }
     }
 
+    /**
+    * Creates a new queue with the given id
+    * and then adds it
+    *
+    * @param id the id of the new queue to add
+    * @throws EventyException if a queue with
+    * the given id already exists
+    */
     public void addQueue(ulong id)
     {
         /* Create a new queue with the given id */
@@ -267,6 +275,15 @@ public final class Engine : Thread
         queueLock.unlock();
     }
 
+    /**
+    * Given an id, this will return
+    * the Queue associated with said
+    * id
+    *
+    * @param id the id of the Queue
+    * @returns The Queue if found but
+    * null otherwise
+    */
     public Queue findQueue(ulong id)
     {
         /* Lock the queue collection */
@@ -289,6 +306,7 @@ public final class Engine : Thread
         return matchedQueue;
     }
 
+    /* TODO: Add coumentation */
     public ulong[] getTypes()
     {
         /* TODO: Implement me */
