@@ -3,6 +3,8 @@ module eventy.event;
 /**
 * Event
 *
+* FIXME: Rename this to `Trigger`
+*
 * An Event represents a trigger for a given signal(s)
 * handlers which associate with the given typeID
 *
