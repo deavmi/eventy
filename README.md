@@ -1,16 +1,11 @@
-<center>
-<img src="logos/logo.png" width=250>
-
-<br>
+![](logos/logo.png)
 
 Eventy
 ======
 
 ### _Easy-to-use_ event-loop dispatcher framework for D-based applications
 
-<hr>
-
-</center>
+---
 
 ## Getting started
 
