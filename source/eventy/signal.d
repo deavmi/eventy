@@ -9,20 +9,19 @@ import eventy.event : Event;
 * which means that it contains an associated function to be run
 * on handling of a given Event
 */
-alias EventHandler = void function(Event);
+//alias EventHandler = void function(Event);
 
-public class Signal
+public abstract class Signal
 {
     /* TypeIDs this signal handler associates with */
     private ulong[] typeIDs;
 
     /* Signal handler */
-    private EventHandler handler;
+    //private EventHandler handler;
 
-    this(ulong[] typeIDs, EventHandler handler)
+    this(ulong[] typeIDs)
     {
         this.typeIDs = typeIDs;
-        this.handler = handler;
     }
 
     /**
@@ -53,8 +52,5 @@ public class Signal
         
     }
 
-    public EventHandler getHandler()
-    {
-        return handler;
-    }
+    public abstract void handler(Event);
 }

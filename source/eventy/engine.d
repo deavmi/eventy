@@ -1,7 +1,7 @@
 module eventy.engine;
 
 import eventy.queues : Queue;
-import eventy.signal : Signal, EventHandler;
+import eventy.signal : Signal;
 import eventy.event : Event;
 
 import std.container.dlist;
@@ -26,10 +26,38 @@ unittest
     engine.start();
 
  
+    /**
+    * Let the event engine know what typeIDs are
+    * allowed to be queued
+    */
     engine.addQueue(1);
     engine.addQueue(2);
 
-    Signal j = new Signal([1,2], &runner);
+
+    /**
+    * Create a new Signal Handler that will handles
+    * event types `1` and `2` with the given `handler()`
+    * function
+    */
+    class SignalHandler1 : Signal
+    {
+    	this()
+    	{
+    		super([1,2]);
+    	}
+
+    	public override void handler(Event e)
+    	{
+    		import std.stdio;
+    		writeln("Running event", e.id);
+    	}
+    }
+
+    /**
+    * Tell the event engine that I want to register
+    * the following handler for its queues `1` and `2`
+    */
+    Signal j = new SignalHandler1();
     engine.addSignalHandler(j);
 
     Event eTest = new Event(1);
@@ -200,8 +228,8 @@ public final class Engine : Thread
 
             public void worker()
             {
-                EventHandler handler = signal.getHandler();
-                handler(e);
+                signal.handler(e);
+                //handler(e);
             }
         };
 
