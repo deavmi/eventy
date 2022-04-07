@@ -95,6 +95,8 @@ public final class Engine : Thread
 
     private Duration sleepTime;
 
+    private bool running;
+
     this()
     {
         super(&run);
@@ -144,7 +146,9 @@ public final class Engine : Thread
     */
     public void run()
     {
-        while(true)
+        running = true;
+
+        while(running)
         {
             /* TODO: Implement me */
 
@@ -196,6 +200,16 @@ public final class Engine : Thread
             // sleepTime = dur!("seconds")(0);
             // sleep(sleepTime);
         }
+    }
+
+    /**
+    * Stops the event engine
+    *
+    * TODO: Examine edge cases where this might not work
+    */
+    public void shutdown()
+    {
+        running = false;
     }
 
     /**
