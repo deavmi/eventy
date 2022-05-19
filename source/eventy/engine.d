@@ -10,13 +10,13 @@ import core.thread : Thread, dur, Duration;
 
 import eventy.exceptions;
 
-
 import std.stdio;
 
 /* TODO: Move elsewhere, this thing thinks it's a delegate in the unit test, idk why */
 void runner(Event e)
 {
     import std.stdio;
+
     writeln("Running event", e.id);
 }
 
@@ -25,14 +25,12 @@ unittest
     Engine engine = new Engine();
     engine.start();
 
- 
     /**
     * Let the event engine know what typeIDs are
     * allowed to be queued
     */
     engine.addQueue(1);
     engine.addQueue(2);
-
 
     /**
     * Create a new Signal Handler that will handles
@@ -41,16 +39,17 @@ unittest
     */
     class SignalHandler1 : Signal
     {
-    	this()
-    	{
-    		super([1,2]);
-    	}
+        this()
+        {
+            super([1, 2]);
+        }
 
-    	public override void handler(Event e)
-    	{
-    		import std.stdio;
-    		writeln("Running event", e.id);
-    	}
+        public override void handler(Event e)
+        {
+            import std.stdio;
+
+            writeln("Running event", e.id);
+        }
     }
 
     /**
@@ -65,12 +64,14 @@ unittest
 
     eTest = new Event(2);
     engine.push(eTest);
-    
 
     Thread.sleep(dur!("seconds")(2));
     engine.push(eTest);
 
     writeln("naai");
+
+    /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
+    engine.shutdown();
 }
 
 /**
@@ -97,11 +98,15 @@ public final class Engine : Thread
 
     private bool running;
 
+    private DList!(DispatchWrapper) threadStore;
+    private Mutex threadStoreLock;
+
     this()
     {
         super(&run);
         queueLock = new Mutex();
         handlerLock = new Mutex();
+        threadStoreLock = new Mutex();
     }
 
     /**
@@ -131,7 +136,7 @@ public final class Engine : Thread
     */
     public void addSignalHandler(Signal e)
     {
-         /* Lock the signal-set */
+        /* Lock the signal-set */
         handlerLock.lock();
 
         /* Add the new handler */
@@ -148,7 +153,7 @@ public final class Engine : Thread
     {
         running = true;
 
-        while(running)
+        while (running)
         {
             /* TODO: Implement me */
 
@@ -163,28 +168,27 @@ public final class Engine : Thread
             * Don't waste time spinning on mutex,
             * if it is not lockable then yield
             */
-            while(!queueLock.tryLock_nothrow())
+            while (!queueLock.tryLock_nothrow())
             {
                 yield();
             }
 
-
-            foreach(Queue queue; queues)
-            {  
+            foreach (Queue queue; queues)
+            {
                 /* If the queue has evenets queued */
-                if(queue.hasEvents())
+                if (queue.hasEvents())
                 {
                     /* TODO: Add different dequeuing techniques */
 
                     /* Pop the first Event */
                     Event headEvent = queue.popEvent();
-                   
+
                     /* Get all signal-handlers for this event type */
                     Signal[] handlersMatched = getSignalsForEvent(headEvent);
 
                     /* Dispatch the signal handlers */
                     dispatch(handlersMatched, headEvent);
-                    
+
                 }
             }
 
@@ -209,7 +213,12 @@ public final class Engine : Thread
     */
     public void shutdown()
     {
+        /* TODO: Insert a lock here, that dispatch should adhere too as well */
+
+        /* Stop the loop */
         running = false;
+
+        
     }
 
     /**
@@ -221,33 +230,94 @@ public final class Engine : Thread
     */
     private void dispatch(Signal[] signalSet, Event e)
     {
-        foreach(Signal signal; signalSet)
+        foreach (Signal signal; signalSet)
         {
             /* Create a new Thread */
-            Thread handlerThread = getThread(signal, e);
+            // Thread handlerThread = getThread(signal, e);
+            DispatchWrapper handlerThread = new DispatchWrapper(signal, e);
+
+            /**
+            * TODO
+            *
+            * When we call `shutdown()` there may very well be a case of
+            * where the threadStoreLock unlocks after the clean up
+            * loop, but storeThread hangs here during that time,
+            * then proceeds to start the thread, we should therefore,
+            * either block on running changed (solution 1, not as granular)
+            *
+            * Solution 2: Block on dispatch being called <- use this method rather
+            * But still needs a running check, it must not go ahead if running is now
+            * false
+            */
+
+            /* Store the thread */
+            storeThread(handlerThread);
 
             /* Start the thread */
             handlerThread.start();
         }
     }
 
-    private Thread getThread(Signal signal, Event e)
+    /**
+    * Store the thread
+    *
+    * TODO: This can only be implemented if we use
+    * wrapper threads that exit, and we can signal
+    * removal from thread store then
+    */
+    private void storeThread(DispatchWrapper t)
     {
-        Thread signalHandlerThread = new class Thread
+        /* Lock the thread store from editing */
+        threadStoreLock.lock();
+
+        /* Add the thread */
+        threadStore ~= t;
+
+        /* Unlock the thread store for editing */
+        threadStoreLock.unlock();
+    }
+
+    /**
+    * Removes a thread from the thread store
+    */
+    private void removeThread(DispatchWrapper t)
+    {
+        /* Lock the thread store from editing */
+        threadStoreLock.lock();
+
+        /* Remove the thread */
+        threadStore.linearRemoveElement(t);
+
+        /* Unlock the thread store for editing */
+        threadStoreLock.unlock();
+    }
+
+    /**
+    * DispatchWrapper
+    *
+    * Effectively a thread but with the Signal,
+    * Event included with clean-up routines
+    */
+    private class DispatchWrapper : Thread
+    {
+        private Signal signal;
+        private Event e;
+
+        this(Signal signal, Event e)
         {
-            this()
-            {
-                super(&worker);
-            }
+            super(&run);
+            this.signal = signal;
+            this.e = e;
+        }
 
-            public void worker()
-            {
-                signal.handler(e);
-                //handler(e);
-            }
-        };
+        private void run()
+        {
+            /* Run the signal handler */
+            signal.handler(e);
 
-        return signalHandlerThread;
+            /* Remove myself from the thread store */
+            removeThread(this);
+        }
     }
 
     /**
@@ -267,9 +337,9 @@ public final class Engine : Thread
         handlerLock.lock();
 
         /* Find all handlers matching */
-        foreach(Signal signal; handlers)
+        foreach (Signal signal; handlers)
         {
-            if(signal.handles(e.id))
+            if (signal.handles(e.id))
             {
                 matchedHandlers ~= signal;
             }
@@ -291,7 +361,7 @@ public final class Engine : Thread
     {
         Queue matchedQueue = findQueue(e.id);
 
-        if(matchedQueue)
+        if (matchedQueue)
         {
             /* Append to the queue */
             matchedQueue.add(e);
@@ -315,7 +385,7 @@ public final class Engine : Thread
         queueLock.lock();
 
         /* If no such queue exists then add it (recursive mutex used) */
-        if(!findQueue(id))
+        if (!findQueue(id))
         {
             /* Add the queue */
             queues ~= newQueue;
@@ -324,7 +394,6 @@ public final class Engine : Thread
         {
             throw new EventyException("Failure to add queue with ID already in use");
         }
-        
 
         /* Unlock the queue collection */
         queueLock.unlock();
@@ -346,9 +415,9 @@ public final class Engine : Thread
 
         /* Find the matching queue */
         Queue matchedQueue;
-        foreach(Queue queue; queues)
+        foreach (Queue queue; queues)
         {
-            if(queue.id == id)
+            if (queue.id == id)
             {
                 matchedQueue = queue;
                 break;
