@@ -68,7 +68,7 @@ unittest
     Thread.sleep(dur!("seconds")(2));
     engine.push(eTest);
 
-    writeln("naai");
+    writeln("done with main thread code");
 
     /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
     engine.shutdown();
