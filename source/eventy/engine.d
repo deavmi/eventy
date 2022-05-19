@@ -157,10 +157,7 @@ public final class Engine : Thread
         {
             /* TODO: Implement me */
 
-            /**
-            * TODO: If lock fails, then yield
-            */
-
+           
             /**
             * Lock the queue-set
             *
