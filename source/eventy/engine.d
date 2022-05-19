@@ -13,7 +13,7 @@ import eventy.exceptions;
 import std.stdio;
 
 /* TODO: Move elsewhere, this thing thinks it's a delegate in the unit test, idk why */
-void runner(Event e)
+private void runner(Event e)
 {
     import std.stdio;
 
