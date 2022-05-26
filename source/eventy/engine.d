@@ -349,6 +349,15 @@ public final class Engine : Thread
     }
 
     /**
+    * Checks if there is a Signal that handles the given
+    * event ID
+    */
+    public bool isSignalExists(ulong id)
+    {
+    	return getSignalsForEvent(new Event(id)).length != 0;
+    }
+
+    /**
     * push(Event e)
     *
     * Provided an Event, `e`, this will enqueue the event
