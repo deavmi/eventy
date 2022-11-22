@@ -1,0 +1,9 @@
+site_name: Eventy
+theme: alabaster
+
+nav:
+  - Home: index.md
+  - Quick Start: quick_start.md
+
+extra:
+  logo: logo.png
