@@ -184,9 +184,13 @@ public final class Engine : Thread
         /* Yield if a lock fails (prevent potential thread starvation) */
         defaultSettings.agressiveTryLock = false;
 
-        /* Make the event engine loop sleep (1) and for 200ms (2) (TODO: Adjust this) */
-        defaultSettings.holdOffMode = HoldOffMode.SLEEP;
-        defaultSettings.sleepTime = dur!("msecs")(50);
+        // FIXME: Investigate ways to lower load average
+        // /* Make the event engine loop sleep (1) and for 50ms (2) (TODO: Adjust this) */
+        // defaultSettings.holdOffMode = HoldOffMode.SLEEP;
+        // defaultSettings.sleepTime = dur!("msecs")(50);
+
+        /* Use yeilding for most responsiveness */
+        defaultSettings.holdOffMode = HoldOffMode.YIELD;
 
         /* Do not gracefully shutdown */
         defaultSettings.gracefulShutdown = false;
