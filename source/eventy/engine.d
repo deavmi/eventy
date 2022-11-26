@@ -195,31 +195,27 @@ public final class Engine : Thread
         this(defaultSettings);
     }
 
-    /**
-    * Set the event loop sleep time
-    *
-    * The load average will sky rocket if it is 0,
-    * which is just because it is calculated on how
-    * full the run queue is, length but also over time
-    * and even just one task continousy in it will
-    * make the average high
-    *
-    * Reason why it's always runnable is the process
-    * (the "thread") is a tight loop with no sleeps
-    * that would dequeue it from the run queue and/or
-    * no I/O system calls that would put it into the
-    * waiting queue
-    */
-    public void setSleep(Duration time)
+    /** 
+     * Returns the current configuration paremeters being
+     * used by the engine
+     *
+     * Returns: The EngineSettings struct
+     */
+    public EngineSettings getConfig()
     {
-        // sleepTime = time;
+        return settings;
     }
 
-    /**
-    * Adds the given Signal handler
-    *
-    * @param e the Signal handler to add
-    */
+    /** 
+     * Updates the current configuration of the engine
+     *
+     * Params:
+     *   newSettings = The new EngineSettings struct to use
+     */
+    public void setConfig(EngineSettings newSettings)
+    {
+        this.settings = newSettings;
+    }
 
     /** 
      * Attaches a new signal handler to the engine
@@ -381,9 +377,12 @@ public final class Engine : Thread
         threadStoreLock.unlock();
     }
 
-    /**
-    * Removes a thread from the thread store
-    */
+    /** 
+     * Removes a thread from the thread store
+     *
+     * Params:
+     *   t = the thread to remove
+     */
     private void removeThread(DispatchWrapper t)
     {
         /* Lock the thread store from editing */
@@ -396,12 +395,12 @@ public final class Engine : Thread
         threadStoreLock.unlock();
     }
 
-    /**
-    * DispatchWrapper
-    *
-    * Effectively a thread but with the Signal,
-    * Event included with clean-up routines
-    */
+    /** 
+     * DispatchWrapper
+     *
+     * Effectively a thread but with the Signal,
+     * Event included with clean-up routines
+     */
     private class DispatchWrapper : Thread
     {
         private Signal signal;
@@ -424,14 +423,15 @@ public final class Engine : Thread
         }
     }
 
-    /**
-    * returns all signal(s) responsible for
-    * handling the type of Event provided
-    *
-    * @param e the Event type to match to
-    * @returns Signal[] the list of signal
-    * handlers that handle event e
-    */
+    /** 
+     * Returns all the signal handlers responsible
+     * for handling the type of Event provided
+     *
+     * Params:
+     *   e = the Event type to match to
+     * Returns: A Signal[] containing each handler
+     *          registered to handle type <code>e</code>
+     */
     public Signal[] getSignalsForEvent(Event e)
     {
         /* Matched handlers */
@@ -458,6 +458,7 @@ public final class Engine : Thread
     /** 
      * Checks if there is a signal handler that handles
      * the given event id
+     *
      * Params:
      *   id = the event ID to check
      * Returns: 
@@ -467,12 +468,13 @@ public final class Engine : Thread
     	return getSignalsForEvent(new Event(id)).length != 0;
     }
 
-    /**
-    * push(Event e)
-    *
-    * Provided an Event, `e`, this will enqueue the event
-    * to 
-    */
+    /** 
+     * Pushes the given Event into the engine
+     * for eventual dispatch
+     *
+     * Params:
+     *   e = the event to push
+     */
     public void push(Event e)
     {
         Queue matchedQueue = findQueue(e.id);
@@ -484,14 +486,17 @@ public final class Engine : Thread
         }
     }
 
-    /**
-    * Creates a new queue with the given id
-    * and then adds it
-    *
-    * @param id the id of the new queue to add
-    * @throws EventyException if a queue with
-    * the given id already exists
-    */
+    /** 
+     * Creates a new queue with the given id
+     * and then adds it.
+     * 
+     * Throws EventyException if the id is already
+     * in use by another queue
+     *
+     * Params:
+     *   id = the id of the neq eueue to create
+     * Throws: EventyException
+     */
     public void addQueue(ulong id)
     {
         /* Create a new queue with the given id */
@@ -515,15 +520,15 @@ public final class Engine : Thread
         queueLock.unlock();
     }
 
-    /**
-    * Given an id, this will return
-    * the Queue associated with said
-    * id
-    *
-    * @param id the id of the Queue
-    * @returns The Queue if found but
-    * null otherwise
-    */
+    /** 
+     * Given an if, this will return the Queue
+     * associated with said id
+     *
+     * Params:
+     *   id = the id of the Queue
+     * Returns: The Queue if found, otherwise
+     *          <code>null</code>
+     */
     public Queue findQueue(ulong id)
     {
         /* Lock the queue collection */
@@ -547,7 +552,7 @@ public final class Engine : Thread
     }
 
     /* TODO: Add coumentation */
-    public ulong[] getTypes()
+    private ulong[] getTypes()
     {
         /* TODO: Implement me */
         return null;
