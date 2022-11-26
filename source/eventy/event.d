@@ -1,15 +1,13 @@
 module eventy.event;
 
-/**
-* Event
-*
-* FIXME: Rename this to `Trigger`
-*
-* An Event represents a trigger for a given signal(s)
-* handlers which associate with the given typeID
-*
-* It can optionally take a payload with it as well
-*/
+/** 
+ * Event
+ *
+ * An Event represents a trigger for a given signal(s)
+ * handlers which associate with the given typeID
+ *
+ * It can optionally take a payload with it as well
+ */
 public class Event
 {
     /**
@@ -24,4 +22,6 @@ public class Event
 
     ulong id;
     ubyte[] payload;
+
+    // TODO: Remove the requirement for the payload
 }
