@@ -136,22 +136,32 @@ unittest
 public final class Engine : Thread
 {
     /* TODO: Or use a queue data structure */
+    /* Registered queues */
     private DList!(Queue) queues;
     private Mutex queueLock;
 
     /* TODO: Or use a queue data structure */
+    /* Registered signal handlers */
     private DList!(Signal) handlers;
     private Mutex handlerLock;
-
 
     /* Engine configuration */
     private EngineSettings settings;
 
+    /* Whether engine is running or not */
     private bool running;
 
+    /* Dispatched threads */
     private DList!(DispatchWrapper) threadStore;
     private Mutex threadStoreLock;
 
+    /** 
+     * Instantiates a new Eventy engine with the provided
+     * configuration
+     *
+     * Params:
+     *   settings = The EngineSettings to use
+     */
     this(EngineSettings settings)
     {
         super(&run);
@@ -162,7 +172,6 @@ public final class Engine : Thread
         this.settings = settings;
     }
 
-    
     /** 
      * Instantiates a new Eventy engine with the default
      * settings
