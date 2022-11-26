@@ -18,6 +18,9 @@ public struct EngineSettings
 
     /* If `holdOffMode` is `SLEEP` then set the duration for the sleep */
     Duration sleepTime;
+
+    /* Calling `shutdown()` will wait for any pending events to be dispatched before shutting down */
+    bool gracefulShutdown;
 }
 
 /**

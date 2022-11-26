@@ -189,6 +189,9 @@ public final class Engine : Thread
         defaultSettings.holdOffMode = HoldOffMode.SLEEP;
         defaultSettings.sleepTime = dur!("msecs")(200);
 
+        /* Do not gracefully shutdown */
+        defaultSettings.gracefulShutdown = false;
+
         this(defaultSettings);
     }
 
@@ -312,6 +315,12 @@ public final class Engine : Thread
     public void shutdown()
     {
         /* TODO: Insert a lock here, that dispatch should adhere too as well */
+
+        /* Wait for any pendings events (if configured) */
+        if(settings.gracefulShutdown)
+        {
+            while(hasPendingEvents()) {}
+        }
 
         /* Stop the loop */
         running = false;
