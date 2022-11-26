@@ -24,7 +24,9 @@ public struct EngineSettings
 }
 
 /**
- * 
+ * Hold off mode
+ *
+ * Method to use for "sleeping" the event loop
  */
 public enum HoldOffMode
 {
