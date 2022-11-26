@@ -251,13 +251,15 @@ public final class Engine : Thread
             /**
             * Lock the queue-set
             *
-            * Additionally:
-            * Don't waste time spinning on mutex,
-            * if it is not lockable then yield
+            * TODO: Maybe add sleep support here too?
             */
             while (!queueLock.tryLock_nothrow())
             {
-                yield();
+                // Don't waste time spinning on mutex, yield if failed
+                if(!settings.agressiveTryLock)
+                {
+                    yield();
+                }
             }
 
             foreach (Queue queue; queues)
