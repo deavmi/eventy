@@ -306,15 +306,14 @@ public final class Engine : Thread
     }
 
     /** 
-     * Stops the engine
-     *
-     * TODO: Examine cases where this may not work
-     * TODO: Should we perhaps kill all other things
-     * i.e. stopping running threads
+     * Shuts down the event engine
      */
     public void shutdown()
     {
         /* TODO: Insert a lock here, that dispatch should adhere too as well */
+
+        /* FIXME: We should prevent adding of queues during shutdown */
+        /* FIXME: We should prevent pushing of events during shutdown */
 
         /* Wait for any pendings events (if configured) */
         if(settings.gracefulShutdown)
