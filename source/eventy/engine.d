@@ -165,6 +165,7 @@ public final class Engine : Thread
     this(EngineSettings settings)
     {
         super(&run);
+
         queueLock = new Mutex();
         handlerLock = new Mutex();
         threadStoreLock = new Mutex();
@@ -321,15 +322,17 @@ public final class Engine : Thread
         running = false;
     }
 
-    /**
-    * Dispatch(Signal[] set, Event e)
-    *
-    * Creates a new thread per signal and dispatches the event to them
-    *
-    * TODO: Add ability to dispatch on this thread
-    */
+    /** 
+     * Creates a new thread per signal and dispatches the event to them
+     *
+     * Params:
+     *   signalSet = The signal handlers to use for dispatching
+     *   e = the Event to be dispatched to each handler
+     */
     private void dispatch(Signal[] signalSet, Event e)
     {
+        /* TODO: Add ability to dispatch on this thread */
+
         foreach (Signal signal; signalSet)
         {
             /* Create a new Thread */
@@ -358,15 +361,20 @@ public final class Engine : Thread
         }
     }
 
-    /**
-    * Store the thread
-    *
-    * TODO: This can only be implemented if we use
-    * wrapper threads that exit, and we can signal
-    * removal from thread store then
-    */
+    /** 
+     * Adds a thread to the thread store
+     *
+     * Params:
+     *   t = the thread to add
+     */
     private void storeThread(DispatchWrapper t)
     {
+        /**
+        * TODO: This can only be implemented if we use
+        * wrapper threads that exit, and we can signal
+        * removal from thread store then
+        */
+
         /* Lock the thread store from editing */
         threadStoreLock.lock();
 
