@@ -3,6 +3,7 @@ module eventy.engine;
 import eventy.queues : Queue;
 import eventy.signal : Signal;
 import eventy.event : Event;
+import eventy.config;
 
 import std.container.dlist;
 import core.sync.mutex : Mutex;
@@ -94,19 +95,42 @@ public final class Engine : Thread
     private DList!(Signal) handlers;
     private Mutex handlerLock;
 
-    private Duration sleepTime;
+
+    /* Engine configuration */
+    private EngineSettings settings;
 
     private bool running;
 
     private DList!(DispatchWrapper) threadStore;
     private Mutex threadStoreLock;
 
-    this()
+    this(EngineSettings settings)
     {
         super(&run);
         queueLock = new Mutex();
         handlerLock = new Mutex();
         threadStoreLock = new Mutex();
+
+        this.settings = settings;
+    }
+
+    
+    /** 
+     * Instantiates a new Eventy engine with the default
+     * settings
+     */
+    this()
+    {
+        EngineSettings defaultSettings;
+
+        /* Yield if a lock fails (prevent potential thread starvation) */
+        defaultSettings.agressiveTryLock = false;
+
+        /* Make the event engine loop sleep (1) and for 200ms (2) (TODO: Adjust this) */
+        defaultSettings.holdOffMode = HoldOffMode.SLEEP;
+        defaultSettings.sleepTime = dur!("msecs")(200);
+
+        this(defaultSettings);
     }
 
     /**
@@ -126,7 +150,7 @@ public final class Engine : Thread
     */
     public void setSleep(Duration time)
     {
-        sleepTime = time;
+        // sleepTime = time;
     }
 
     /**
@@ -192,14 +216,22 @@ public final class Engine : Thread
             /* Unlock the queue set */
             queueLock.unlock();
 
-            /* Yield to stop mutex starvation */
-            yield();
-
-            /* TODO: Add yield to stop mutex starvation on a single thread */
-
-            /* Sleep the thread */
-            // sleepTime = dur!("seconds")(0);
-            // sleep(sleepTime);
+            /* Activate hold off (dependening on the type) */
+            if(settings.holdOffMode == HoldOffMode.YIELD)
+            {
+                /* Yield to stop mutex starvation */
+                yield();
+            }
+            else if(settings.holdOffMode == HoldOffMode.SLEEP)
+            {
+                /* Sleep the thread (for given time) to stop mutex starvation */
+                sleep(settings.sleepTime);
+            }
+            else
+            {
+                /* This should never happen */
+                assert(false);
+            }
         }
     }
 
