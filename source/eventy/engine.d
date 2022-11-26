@@ -186,7 +186,7 @@ public final class Engine : Thread
 
         /* Make the event engine loop sleep (1) and for 200ms (2) (TODO: Adjust this) */
         defaultSettings.holdOffMode = HoldOffMode.SLEEP;
-        defaultSettings.sleepTime = dur!("msecs")(200);
+        defaultSettings.sleepTime = dur!("msecs")(50);
 
         /* Do not gracefully shutdown */
         defaultSettings.gracefulShutdown = false;
