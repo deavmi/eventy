@@ -13,13 +13,13 @@ import eventy.exceptions;
 
 import std.stdio;
 
-/* TODO: Move elsewhere, this thing thinks it's a delegate in the unit test, idk why */
-private void runner(Event e)
-{
-    import std.stdio;
+// /* TODO: Move elsewhere, this thing thinks it's a delegate in the unit test, idk why */
+// private void runner(Event e)
+// {
+//     import std.stdio;
 
-    writeln("Running event", e.id);
-}
+//     writeln("Running event", e.id);
+// }
 
 unittest
 {
@@ -71,9 +71,68 @@ unittest
 
     writeln("done with main thread code");
 
+    while(engine.hasPendingEvents()) {}
+
     /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
     engine.shutdown();
+
+   
 }
+
+// unittest
+// {
+//     EngineSettings customSettings = {holdOffMode: HoldOffMode.YIELD};
+//     Engine engine = new Engine(customSettings);
+//     engine.start();
+
+//     /**
+//     * Let the event engine know what typeIDs are
+//     * allowed to be queued
+//     */
+//     engine.addQueue(1);
+//     engine.addQueue(2);
+
+//     /**
+//     * Create a new Signal Handler that will handles
+//     * event types `1` and `2` with the given `handler()`
+//     * function
+//     */
+//     class SignalHandler1 : Signal
+//     {
+//         this()
+//         {
+//             super([1, 2]);
+//         }
+
+//         public override void handler(Event e)
+//         {
+//             import std.stdio;
+
+//             writeln("Running event", e.id);
+//         }
+//     }
+
+//     /**
+//     * Tell the event engine that I want to register
+//     * the following handler for its queues `1` and `2`
+//     */
+//     Signal j = new SignalHandler1();
+//     engine.addSignalHandler(j);
+
+//     Event eTest = new Event(1);
+//     engine.push(eTest);
+
+//     eTest = new Event(2);
+//     engine.push(eTest);
+
+//     Thread.sleep(dur!("seconds")(2));
+//     engine.push(eTest);
+
+//     writeln("done with main thread code");
+
+//     /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
+//     engine.shutdown();
+// }
 
 /**
 * Engine
@@ -158,6 +217,13 @@ public final class Engine : Thread
     *
     * @param e the Signal handler to add
     */
+
+    /** 
+     * Attaches a new signal handler to the engine
+     *
+     * Params:
+     *   e = the signal handler to add
+     */
     public void addSignalHandler(Signal e)
     {
         /* Lock the signal-set */
@@ -170,18 +236,19 @@ public final class Engine : Thread
         handlerLock.unlock();
     }
 
-    /**
-    * Event loop
-    */
-    public void run()
+    /** 
+     * The main event loop
+     *
+     * This checks at a certain interval (see HoldOffMode) if
+     * there are any events in any of the queues, if so,
+     * the dispatcher for said event type is called
+     */
+    private void run()
     {
         running = true;
 
         while (running)
         {
-            /* TODO: Implement me */
-
-           
             /**
             * Lock the queue-set
             *
@@ -235,19 +302,19 @@ public final class Engine : Thread
         }
     }
 
-    /**
-    * Stops the event engine
-    *
-    * TODO: Examine edge cases where this might not work
-    */
+    /** 
+     * Stops the engine
+     *
+     * TODO: Examine cases where this may not work
+     * TODO: Should we perhaps kill all other things
+     * i.e. stopping running threads
+     */
     public void shutdown()
     {
         /* TODO: Insert a lock here, that dispatch should adhere too as well */
 
         /* Stop the loop */
         running = false;
-
-        
     }
 
     /**
@@ -380,10 +447,13 @@ public final class Engine : Thread
         return matchedHandlers;
     }
 
-    /**
-    * Checks if there is a Signal that handles the given
-    * event ID
-    */
+    /** 
+     * Checks if there is a signal handler that handles
+     * the given event id
+     * Params:
+     *   id = the event ID to check
+     * Returns: 
+     */
     public bool isSignalExists(ulong id)
     {
     	return getSignalsForEvent(new Event(id)).length != 0;
@@ -473,5 +543,35 @@ public final class Engine : Thread
     {
         /* TODO: Implement me */
         return null;
+    }
+
+
+    /** 
+     * Checks if any of the queues in the event engine
+     * have any pending events in them waiting dispatch
+     *
+     * Returns: <code>true</code> if there are pending events,
+     *          <code>false</code> otherwise
+     */
+    public bool hasPendingEvents()
+    {
+        bool isPending = false;
+
+        /* Lock the queues */
+        queueLock.lock();
+
+        foreach (Queue queue; queues)
+        {
+            if (queue.hasEvents())
+            {
+                isPending = true;
+                break;
+            }
+        }
+        
+        /* Unlock the queues */
+        queueLock.unlock();
+
+        return isPending;
     }
 }
