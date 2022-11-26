@@ -38,8 +38,6 @@ unittest
 
         public override void handler(Event e)
         {
-            import std.stdio;
-
             writeln("Running event", e.id);
         }
     }
@@ -97,8 +95,6 @@ unittest
 
         public override void handler(Event e)
         {
-            import std.stdio;
-
             writeln("Running event", e.id);
         }
     }
