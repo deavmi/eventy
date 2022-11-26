@@ -4,25 +4,16 @@ import eventy.queues : Queue;
 import eventy.signal : Signal;
 import eventy.event : Event;
 import eventy.config;
+import eventy.exceptions;
 
 import std.container.dlist;
 import core.sync.mutex : Mutex;
 import core.thread : Thread, dur, Duration;
 
-import eventy.exceptions;
-
-import std.stdio;
-
-// /* TODO: Move elsewhere, this thing thinks it's a delegate in the unit test, idk why */
-// private void runner(Event e)
-// {
-//     import std.stdio;
-
-//     writeln("Running event", e.id);
-// }
-
 unittest
 {
+    import std.stdio;
+
     Engine engine = new Engine();
     engine.start();
 
@@ -75,64 +66,66 @@ unittest
 
     /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
     engine.shutdown();
-
-   
 }
 
-// unittest
-// {
-//     EngineSettings customSettings = {holdOffMode: HoldOffMode.YIELD};
-//     Engine engine = new Engine(customSettings);
-//     engine.start();
+unittest
+{
+    import std.stdio;
 
-//     /**
-//     * Let the event engine know what typeIDs are
-//     * allowed to be queued
-//     */
-//     engine.addQueue(1);
-//     engine.addQueue(2);
+    EngineSettings customSettings = {holdOffMode: HoldOffMode.YIELD};
+    Engine engine = new Engine(customSettings);
+    engine.start();
 
-//     /**
-//     * Create a new Signal Handler that will handles
-//     * event types `1` and `2` with the given `handler()`
-//     * function
-//     */
-//     class SignalHandler1 : Signal
-//     {
-//         this()
-//         {
-//             super([1, 2]);
-//         }
+    /**
+    * Let the event engine know what typeIDs are
+    * allowed to be queued
+    */
+    engine.addQueue(1);
+    engine.addQueue(2);
 
-//         public override void handler(Event e)
-//         {
-//             import std.stdio;
+    /**
+    * Create a new Signal Handler that will handles
+    * event types `1` and `2` with the given `handler()`
+    * function
+    */
+    class SignalHandler1 : Signal
+    {
+        this()
+        {
+            super([1, 2]);
+        }
 
-//             writeln("Running event", e.id);
-//         }
-//     }
+        public override void handler(Event e)
+        {
+            import std.stdio;
 
-//     /**
-//     * Tell the event engine that I want to register
-//     * the following handler for its queues `1` and `2`
-//     */
-//     Signal j = new SignalHandler1();
-//     engine.addSignalHandler(j);
+            writeln("Running event", e.id);
+        }
+    }
 
-//     Event eTest = new Event(1);
-//     engine.push(eTest);
+    /**
+    * Tell the event engine that I want to register
+    * the following handler for its queues `1` and `2`
+    */
+    Signal j = new SignalHandler1();
+    engine.addSignalHandler(j);
 
-//     eTest = new Event(2);
-//     engine.push(eTest);
+    Event eTest = new Event(1);
+    engine.push(eTest);
 
-//     Thread.sleep(dur!("seconds")(2));
-//     engine.push(eTest);
+    eTest = new Event(2);
+    engine.push(eTest);
 
-//     writeln("done with main thread code");
+    Thread.sleep(dur!("seconds")(2));
+    engine.push(eTest);
 
-//     /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
-//     engine.shutdown();
-// }
+    writeln("done with main thread code");
+
+    while(engine.hasPendingEvents()) {}
+
+    /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
+    engine.shutdown();
+}
 
 /**
 * Engine
