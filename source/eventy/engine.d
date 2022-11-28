@@ -1,6 +1,6 @@
 module eventy.engine;
 
-import eventy.queues : Queue;
+import eventy.types : EventType;
 import eventy.signal : Signal;
 import eventy.event : Event;
 import eventy.config;
@@ -9,20 +9,20 @@ import eventy.exceptions;
 import std.container.dlist;
 import core.sync.mutex : Mutex;
 import core.thread : Thread, dur, Duration;
+import std.conv : to;
 
 unittest
 {
     import std.stdio;
 
     Engine engine = new Engine();
-    engine.start();
 
     /**
     * Let the event engine know what typeIDs are
     * allowed to be queued
     */
-    engine.addQueue(1);
-    engine.addQueue(2);
+    engine.addEventType(new EventType(1));
+    engine.addEventType(new EventType(2));
 
     /**
     * Create a new Signal Handler that will handles
@@ -38,7 +38,7 @@ unittest
 
         public override void handler(Event e)
         {
-            writeln("Running event", e.id);
+            writeln("Running event", e.getID());
         }
     }
 
@@ -60,7 +60,7 @@ unittest
 
     writeln("done with main thread code");
 
-    while(engine.hasPendingEvents()) {}
+    while(engine.hasEventsRunning()) {}
 
     /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
     engine.shutdown();
@@ -72,14 +72,13 @@ unittest
 
     EngineSettings customSettings = {holdOffMode: HoldOffMode.YIELD};
     Engine engine = new Engine(customSettings);
-    engine.start();
 
     /**
     * Let the event engine know what typeIDs are
     * allowed to be queued
     */
-    engine.addQueue(1);
-    engine.addQueue(2);
+    engine.addEventType(new EventType(1));
+    engine.addEventType(new EventType(2));
 
     /**
     * Create a new Signal Handler that will handles
@@ -95,7 +94,7 @@ unittest
 
         public override void handler(Event e)
         {
-            writeln("Running event", e.id);
+            writeln("Running event", e.getID());
         }
     }
 
@@ -117,7 +116,7 @@ unittest
 
     writeln("done with main thread code");
 
-    while(engine.hasPendingEvents()) {}
+    while(engine.hasEventsRunning()) {}
 
     /* TODO: Before shutting down, actually test it out (i.e. all events ran) */
     engine.shutdown();
@@ -133,14 +132,12 @@ unittest
 * handlers, add signal handlers, among many
 * other things
 */
-public final class Engine : Thread
+public final class Engine
 {
-    /* TODO: Or use a queue data structure */
     /* Registered queues */
-    private DList!(Queue) queues;
-    private Mutex queueLock;
+    private DList!(EventType) eventTypes;
+    private Mutex eventTypesLock;
 
-    /* TODO: Or use a queue data structure */
     /* Registered signal handlers */
     private DList!(Signal) handlers;
     private Mutex handlerLock;
@@ -164,9 +161,7 @@ public final class Engine : Thread
      */
     this(EngineSettings settings)
     {
-        super(&run);
-
-        queueLock = new Mutex();
+        eventTypesLock = new Mutex();
         handlerLock = new Mutex();
         threadStoreLock = new Mutex();
 
@@ -239,74 +234,6 @@ public final class Engine : Thread
     }
 
     /** 
-     * The main event loop
-     *
-     * This checks at a certain interval (see HoldOffMode) if
-     * there are any events in any of the queues, if so,
-     * the dispatcher for said event type is called
-     */
-    private void run()
-    {
-        running = true;
-
-        while (running)
-        {
-            /**
-            * Lock the queue-set
-            *
-            * TODO: Maybe add sleep support here too?
-            */
-            while (!queueLock.tryLock_nothrow())
-            {
-                // Don't waste time spinning on mutex, yield if failed
-                if(!settings.agressiveTryLock)
-                {
-                    yield();
-                }
-            }
-
-            foreach (Queue queue; queues)
-            {
-                /* If the queue has evenets queued */
-                if (queue.hasEvents())
-                {
-                    /* TODO: Add different dequeuing techniques */
-
-                    /* Pop the first Event */
-                    Event headEvent = queue.popEvent();
-
-                    /* Get all signal-handlers for this event type */
-                    Signal[] handlersMatched = getSignalsForEvent(headEvent);
-
-                    /* Dispatch the signal handlers */
-                    dispatch(handlersMatched, headEvent);
-
-                }
-            }
-
-            /* Unlock the queue set */
-            queueLock.unlock();
-
-            /* Activate hold off (dependening on the type) */
-            if(settings.holdOffMode == HoldOffMode.YIELD)
-            {
-                /* Yield to stop mutex starvation */
-                yield();
-            }
-            else if(settings.holdOffMode == HoldOffMode.SLEEP)
-            {
-                /* Sleep the thread (for given time) to stop mutex starvation */
-                sleep(settings.sleepTime);
-            }
-            else
-            {
-                /* This should never happen */
-                assert(false);
-            }
-        }
-    }
-
-    /** 
      * Shuts down the event engine
      */
     public void shutdown()
@@ -319,11 +246,8 @@ public final class Engine : Thread
         /* Wait for any pendings events (if configured) */
         if(settings.gracefulShutdown)
         {
-            while(hasPendingEvents()) {}
+            while(hasEventsRunning()) {}
         }
-
-        /* Stop the loop */
-        running = false;
     }
 
     /** 
@@ -335,12 +259,9 @@ public final class Engine : Thread
      */
     private void dispatch(Signal[] signalSet, Event e)
     {
-        /* TODO: Add ability to dispatch on this thread */
-
         foreach (Signal signal; signalSet)
         {
             /* Create a new Thread */
-            // Thread handlerThread = getThread(signal, e);
             DispatchWrapper handlerThread = new DispatchWrapper(signal, e);
 
             /**
@@ -408,6 +329,29 @@ public final class Engine : Thread
     }
 
     /** 
+     * Checks whether or not there are still events
+     * running at the time of calling
+     *
+     * Returns: <code>true</code> if there are events
+     * still running, <code>false</code> otherwise
+     */
+    public bool hasEventsRunning()
+    {
+        /* Whether there are events running or not */
+        bool has = false;
+
+        /* Lock the thread store */
+        threadStoreLock.lock();
+
+        has = !threadStore.empty();
+
+        /* Unlock the thread store */
+        threadStoreLock.unlock();
+
+        return has;
+    }
+
+    /** 
      * DispatchWrapper
      *
      * Effectively a thread but with the Signal,
@@ -455,7 +399,7 @@ public final class Engine : Thread
         /* Find all handlers matching */
         foreach (Signal signal; handlers)
         {
-            if (signal.handles(e.id))
+            if (signal.handles(e.getID()))
             {
                 matchedHandlers ~= signal;
             }
@@ -473,7 +417,8 @@ public final class Engine : Thread
      *
      * Params:
      *   id = the event ID to check
-     * Returns: 
+     * Returns: <code>true</code> if a signal handler does
+     *          exist, <code>false</code> otherwise
      */
     public bool isSignalExists(ulong id)
     {
@@ -489,78 +434,100 @@ public final class Engine : Thread
      */
     public void push(Event e)
     {
-        Queue matchedQueue = findQueue(e.id);
+        //TODO: New code goes below here
+        /** 
+         * What we want to do here is to effectively
+         * wake up a checker thread and also (before that)
+         * perhaps we say what queue was modified
+         *
+         * THEN the checker thread goes to said queue and
+         * executes said event (dispatches it) and then sleep
+         * again till it is interrupted. We need Pids and kill etc for this
+         *
+         * Idea (2)
+         *
+         * If we cannot do a checker thread then we can spwan a thread here
+         * but then we get no control for priorities etc, although actually we could
+         * maybe? It depends, we don't want multiple dispathers at same time then
+         * (A checker thread would ensure we don't get this)
+         */
 
-        if (matchedQueue)
+        /* Obtain all signal handlers for the given event */
+        Signal[] handlersMatched = getSignalsForEvent(e);
+
+        /* If we get signal handlers then dispatch them */
+        if(handlersMatched.length)
         {
-            /* Append to the queue */
-            matchedQueue.add(e);
+            dispatch(handlersMatched, e);
+        }
+        /* If there are no matching events */
+        else
+        {
+            //TODO: Add default handler support
+            //TODO: Add error throwing in case where not true
         }
     }
 
     /** 
-     * Creates a new queue with the given id
+     * Registers a new EventType with the engine
      * and then adds it.
      * 
-     * Throws EventyException if the id is already
-     * in use by another queue
+     * Throws EventyException if the id of the given
+     * EventType is is already in use by another
      *
      * Params:
-     *   id = the id of the neq eueue to create
+     *   id = the id of the new event type to add
      * Throws: EventyException
      */
-    public void addQueue(ulong id)
+    public void addEventType(EventType evType)
     {
-        /* Create a new queue with the given id */
-        Queue newQueue = new Queue(id);
-
-        /* Lock the queue collection */
-        queueLock.lock();
+        /* Lock the event types list */
+        eventTypesLock.lock();
 
         /* If no such queue exists then add it (recursive mutex used) */
-        if (!findQueue(id))
+        if (!findEventType(evType.getID()))
         {
-            /* Add the queue */
-            queues ~= newQueue;
+            /* Add the event types list */
+            eventTypes ~= evType;
         }
         else
         {
-            throw new EventyException("Failure to add queue with ID already in use");
+            throw new EventyException("Failure to add EventType with id '"~to!(string)(evType.getID())~"\' as it is already in use");
         }
 
-        /* Unlock the queue collection */
-        queueLock.unlock();
+        /* Unlock the event types list */
+        eventTypesLock.unlock();
     }
 
     /** 
-     * Given an if, this will return the Queue
+     * Given an if, this will return the EventType
      * associated with said id
      *
      * Params:
-     *   id = the id of the Queue
-     * Returns: The Queue if found, otherwise
+     *   id = the id of the EventType
+     * Returns: The EventType if found, otherwise
      *          <code>null</code>
      */
-    public Queue findQueue(ulong id)
+    public EventType findEventType(ulong id)
     {
-        /* Lock the queue collection */
-        queueLock.lock();
+        /* Lock the EventType list */
+        eventTypesLock.lock();
 
-        /* Find the matching queue */
-        Queue matchedQueue;
-        foreach (Queue queue; queues)
+        /* Find the matching EventType */
+        EventType matchedEventType;
+        foreach (EventType eventType; eventTypes)
         {
-            if (queue.id == id)
+            if (eventType.getID() == id)
             {
-                matchedQueue = queue;
+                matchedEventType = eventType;
                 break;
             }
         }
 
-        /* Unlock the queue collection */
-        queueLock.unlock();
+        /* Unlock the EventType list */
+        eventTypesLock.unlock();
 
-        return matchedQueue;
+        return matchedEventType;
     }
 
     /* TODO: Add coumentation */
@@ -568,35 +535,5 @@ public final class Engine : Thread
     {
         /* TODO: Implement me */
         return null;
-    }
-
-
-    /** 
-     * Checks if any of the queues in the event engine
-     * have any pending events in them waiting dispatch
-     *
-     * Returns: <code>true</code> if there are pending events,
-     *          <code>false</code> otherwise
-     */
-    public bool hasPendingEvents()
-    {
-        bool isPending = false;
-
-        /* Lock the queues */
-        queueLock.lock();
-
-        foreach (Queue queue; queues)
-        {
-            if (queue.hasEvents())
-            {
-                isPending = true;
-                break;
-            }
-        }
-        
-        /* Unlock the queues */
-        queueLock.unlock();
-
-        return isPending;
     }
 }

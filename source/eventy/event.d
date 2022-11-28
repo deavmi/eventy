@@ -5,23 +5,30 @@ module eventy.event;
  *
  * An Event represents a trigger for a given signal(s)
  * handlers which associate with the given typeID
- *
- * It can optionally take a payload with it as well
  */
 public class Event
 {
-    /**
-    * Creates a new Event, optionally taking with is a
-    * payload
-    */
-    this(ulong typeID, ubyte[] payload = null)
+    /* The event's type id */
+    private ulong id;
+
+    /** 
+     * Creates a new Event with the given typeID
+     *
+     * Params:
+     *   typeID = the new Event's type ID
+     */
+    this(ulong typeID)
     {
         this.id = typeID;
-        this.payload = payload;
     }
 
-    ulong id;
-    ubyte[] payload;
-
-    // TODO: Remove the requirement for the payload
+    /** 
+     * Returns the type ID of this Event
+     *
+     * Returns: The Event's type ID
+     */
+    public final ulong getID()
+    {
+        return id;
+    }
 }
