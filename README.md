@@ -12,7 +12,7 @@ Eventy
 ### The _engine_
 
 The first thing every Eventy-based application will need is an instance of the `Engine`.
-This provides the user with a single object instance of the [`Engine` class](https://eventy.dpldocs.info/v0.4.1/eventy.engine.Engine.html) by which
+This provides the user with a single object instance of the [`Engine` class](https://eventy.dpldocs.info/v0.4.3/eventy.engine.Engine.html) by which
 the user can register _event types_, _signal handlers_ for said events and the ability
 to trigger or _push_ events into the engine.
 
@@ -45,7 +45,7 @@ This will tell the engine to create two new event types with tags `1` and `2` re
 We're almost done. So far we have created a new _engine_ for handling our event tyoes and
 the triggering of events. What is missing is something to _handle those event types_ when
 an event of one of those types is pushed into the engine. Such handlers are referred to as
-_signal handlers_ and in Eventy these are instances of the [`Signal` class](https://eventy.dpldocs.info/v0.4.1/eventy.signal.Signal.html).
+_signal handlers_ and in Eventy these are instances of the [`Signal` class](https://eventy.dpldocs.info/v0.4.3/eventy.signal.Signal.html).
 
 We're going to create a signal that can handle both of the event types `1` and `2` that we
 registered earlier on. We can do this by creating a class that inherits from the `Signal`
@@ -143,10 +143,10 @@ the other.
 
 ## Release notes
 
-### `v0.4.0`
+### `v0.4.3`
 
 ```
-Completely overhauled Eventy system for the v0.4.0 release
+Completely overhauled Eventy system for the v0.4.3 release
 
 Removed the event-loop for a better system (for now) whereby we just dispatch signal handlers on the call to `push(Event)`.
 
