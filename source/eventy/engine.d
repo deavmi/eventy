@@ -434,6 +434,9 @@ public final class Engine
      */
     public void push(Event e)
     {
+        //TODO: Make this return a promise
+
+
         //TODO: New code goes below here
         /** 
          * What we want to do here is to effectively
@@ -528,12 +531,5 @@ public final class Engine
         eventTypesLock.unlock();
 
         return matchedEventType;
-    }
-
-    /* TODO: Add coumentation */
-    private ulong[] getTypes()
-    {
-        /* TODO: Implement me */
-        return null;
     }
 }
