@@ -1,9 +1,10 @@
 {
 	"authors": [
-		"Tristan B. Kildaire"
+		"Tristan B. Velloza Kildaire"
 	],
-	"copyright": "Copyright © 2020, Tristan B. Kildaire",
-	"description": "Easy to use event-loop dispatcher mechanism",
+	"copyright": "Copyright © 2020, Tristan B. Velloza Kildaire",
+	"description": "Asynchronous programming system",
+	"homepage": "http://deavmi.assigned.network/projects/eventy",
 	"license": "LGPL v3",
 	"name": "eventy",
 	"targetType": "library"
