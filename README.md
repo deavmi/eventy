@@ -14,6 +14,17 @@ Eventy eventy = new Eventy();
 Promise myPromise = eventy.new((x) => (x*2));
 
 /**
+ * Chain a promise to this one such that upon completion of
+ * `myPromise` then `promise2` will run and `myPromise` will only
+ * be considered completely done once everything from its chain forward is
+ *
+ * NOTE: That a promise is only completed then once its chain forwards
+ * is completed
+ */
+Promise promise2 = eventy.new((x)=>());
+myPromise.then(promise2);
+
+/**
  * Now start the promise and await its completion,
  * this will basically sleep the calling thread
  * till it awakes. It returns a result
