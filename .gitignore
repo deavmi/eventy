@@ -16,3 +16,4 @@ eventdisp-test-*
 libeventdisp.a
 eventy-test-library
 libeventy.a
+dub.selections.json
