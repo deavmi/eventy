@@ -3,6 +3,9 @@
 		"Tristan B. Velloza Kildaire"
 	],
 	"copyright": "Copyright © 2020, Tristan B. Velloza Kildaire",
+	"dependencies": {
+		"libsnooze": "~>0.2.9"
+	},
 	"description": "Asynchronous programming system",
 	"homepage": "http://deavmi.assigned.network/projects/eventy",
 	"license": "LGPL v3",
