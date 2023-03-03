@@ -1,5 +1,7 @@
 module eventy.task;
 
+import eventy.result : Result;
+
 /** 
  * Task
  *
