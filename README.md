@@ -7,6 +7,8 @@ Eventy
 
 ---
 
+[![D](https://github.com/deavmi/eventy/actions/workflows/d.yml/badge.svg)](https://github.com/deavmi/eventy/actions/workflows/d.yml)
+
 ## Getting started
 
 ### The _engine_
